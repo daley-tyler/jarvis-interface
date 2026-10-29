@@ -1,0 +1,15 @@
+local-scene/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+voice_command.json
+voice_status.json
+voice_ack.json
+voice_request.json
+voice_service.lock
+*.wav
+*.mov
+*.mp4
+*.toe
+*.tox

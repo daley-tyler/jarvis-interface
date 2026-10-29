@@ -1,0 +1,8 @@
+{
+  "voice": "Daniel",
+  "speech_rate": 145,
+  "record_seconds": 5.0,
+  "whisper_model": "tiny.en",
+  "joey_scan_seconds_per_country": 3.5,
+  "microphone_enabled": false
+}
