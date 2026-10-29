@@ -62,6 +62,41 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(self.ack()['seq'], 1)
         self.assertTrue(self.ack()['ok'])
 
+    def test_typed_service_and_bridge_complete_a_round_trip(self):
+        import contextlib
+        import io
+        import sys
+        import threading
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT / 'JARVIS_VOICE_V20'))
+        import voice_service
+        output = io.StringIO()
+        errors = []
+        def send():
+            try:
+                voice_service.handle('Jarvis show Japan', {'ack_timeout': 2}, True)
+            except BaseException as error:
+                errors.append(error)
+        with patch.object(voice_service, 'COMMAND_FILE', self.root / 'voice_command.json'), \
+             patch.object(voice_service, 'STATUS_FILE', self.root / 'voice_status.json'), \
+             patch.object(voice_service, 'ACK_FILE', self.root / 'voice_ack.json'), \
+             contextlib.redirect_stdout(output):
+            sender = threading.Thread(target=send)
+            sender.start()
+            deadline = time.monotonic() + 3
+            frame = 6
+            while sender.is_alive() and time.monotonic() < deadline:
+                self.poll(frame)
+                frame += 6
+                time.sleep(.01)
+            sender.join(timeout=1)
+        self.assertFalse(sender.is_alive())
+        self.assertEqual(errors, [])
+        self.assertEqual(self.selected, [2])
+        self.assertTrue(self.ack()['ok'])
+        self.assertNotIn('not confirmed', output.getvalue())
+        self.assertNotIn('Jarvis show Japan', (self.root / 'voice_status.json').read_text())
+
     def test_low_frame_rate_does_not_wait_six_frames(self):
         self.packet(1)
         self.now = 0.05
