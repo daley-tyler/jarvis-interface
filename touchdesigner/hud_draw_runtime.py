@@ -1,9 +1,9 @@
 """TouchDesigner HUD renderer: NumPy ONLY (no Pillow/PIL needed).
 
-Uses bundled pre-rendered .npy RGBA graphics. Motion, tracking, panel dragging,
+Uses external pre-rendered .npy RGBA graphics. Motion, tracking, panel dragging,
 alpha fading, and live compositing remain interactive in TouchDesigner.
-To regenerate the image assets on a regular Python installation, see
-create_runtime_assets.py; the resulting files are already included.
+Those sprites and their design-time generator are excluded from this
+source-only checkout. See docs/DISTRIBUTION.md for the packaging decision.
 """
 import math
 from pathlib import Path

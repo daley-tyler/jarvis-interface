@@ -1,99 +1,77 @@
 # JARVIS Interface
 
-I built JARVIS to explore a visual interface controlled by hand gestures and short voice commands. TouchDesigner renders the camera feed and animated HUD, while Python handles pinch interaction, floating panels, a country globe, and a separate local voice service.
+I built JARVIS to explore an interface controlled by hand gestures and short voice commands. TouchDesigner renders the animated HUD, while Python handles pinch interaction, floating workspaces, a projected globe and a separate local voice service.
 
-This repository contains the Python source extracted from my saved prototype and the local reliability improvements. The original TouchDesigner scene and its assets are kept separately while I review their redistribution rights. It is a portfolio prototype, with live hardware checks still in progress.
+**This is a source-only portfolio release.** It includes the Python modules, tests and integration notes. It does not include a runnable `.toe` scene, MediaPipe components or visual assets. I kept those out because I could not establish redistribution rights for every component and asset in the saved prototype. You can run the command code and tests without a camera, microphone, Whisper model or TouchDesigner installation.
 
-## How it works
+## Try the code without devices
 
-The scene uses [torinmb’s MediaPipe TouchDesigner plugin](https://github.com/torinmb/mediapipe-touchdesigner) for computer vision. Its local web runtime passes tracking results into TouchDesigner. My HUD callbacks read the hand helper CHOP and route pinch input to the globe, workspaces, central hologram, or portrait panels. NumPy draws the overlays into a 960×540 Script TOP, which TouchDesigner composites over the camera or a cinematic background.
+Use Python 3.12. The local validation environment was Python 3.12.2 on macOS. From the repository folder:
 
-The voice service runs in a separate Python process. It records a bounded microphone clip, transcribes it with faster-whisper on the CPU, and matches one complete command from an allowlist. Atomic JSON files carry commands and status to a TouchDesigner Execute DAT. The bridge polls at most ten times per second, calls the existing controllers, and writes an acknowledgement. It runs no transcription or blocking audio work on the rendering thread.
+```sh
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install 'numpy>=1.26,<3'
+python -m unittest discover -s tests -v
+python JARVIS_VOICE_V20/voice_service.py --text "Jarvis help" --no-speak
+```
+
+The tests use synthetic audio, hand coordinates and temporary files. They replace the device and TouchDesigner boundaries rather than opening hardware. The help command uses only Python's standard library. To exercise an action packet:
+
+```sh
+python JARVIS_VOICE_V20/voice_service.py --text "Jarvis show Japan" --no-speak
+```
+
+Without a compatible running scene, the service reports that the action is queued and unconfirmed. This checks parsing and file transport, not an on-screen action. The test suite also exercises the actual service and bridge together using temporary JSON files and a synthetic scene boundary, including the matching acknowledgement. Runtime JSON contains canonical actions and diagnostics, not the typed sentence or a speech transcript.
+
+## How the interface works
+
+The private prototype uses [torinmb's MediaPipe TouchDesigner plugin](https://github.com/torinmb/mediapipe-touchdesigner). Its local browser runtime sends tracking results into TouchDesigner. The HUD callbacks read the hand helper CHOP and route a pinch to the globe, workspace, central hologram or saved panels. NumPy composites the overlays into a 960×540 Script TOP.
 
 ```mermaid
 flowchart LR
-    Camera --> MediaPipe[MediaPipe local web runtime]
-    MediaPipe --> Helpers[TouchDesigner hand helper CHOP]
-    Helpers --> Gestures[Python gesture controllers]
-    Microphone --> Panel[Push-to-talk voice process]
-    Panel --> Whisper[Local Whisper transcription]
-    Whisper --> Router[Allowlisted command router]
-    Router --> JSON[Local JSON files]
-    JSON --> Bridge[TouchDesigner frame callback]
-    Bridge --> Gestures
-    Gestures --> HUD[NumPy overlays and TouchDesigner output]
+    Camera[Optional camera] --> MediaPipe[MediaPipe local browser runtime]
+    MediaPipe --> Hand[TouchDesigner hand helper CHOP]
+    Hand --> Controls[Python gesture controllers]
+    Mic[Optional microphone] --> PTT[Push-to-talk worker]
+    PTT --> Whisper[Local Whisper transcription]
+    Typed[Typed command] --> Router[Allowlisted command router]
+    Whisper --> Router
+    Router --> Files[Atomic local JSON files]
+    Files --> Bridge[TouchDesigner frame callback]
+    Bridge --> Controls
+    Controls --> HUD[NumPy HUD and scene output]
 ```
 
-The country-linked panels are a saved visual demonstration. They do not identify people or determine anyone’s real location. The wireframe face is a procedural graphic. Labels such as “system diagnostics” refer to prototype UI panels, not a complete system-monitoring application.
+Speech recognition runs in a separate Python process so it does not block rendering. The bridge polls on available frames, at most ten times per second, dispatches one allowlisted action and writes an acknowledgement. Stale packets expire, and stale voice status releases audio ducking after a process failure. Separate pinch acquisition and release thresholds reduce jitter; invalid or lost tracking releases capture.
 
-## Run it locally
+I replaced the terminal-only activation workflow with a small push-to-talk window. Capture and recognition run on one worker, clips are bounded, and Enter mode remains available. I kept a deliberate trigger instead of adding continuous wake detection without hardware evidence. “Jarvis” is checked after transcription; it is not an always-listening detector.
 
-The existing prototype was opened in TouchDesigner **2025.33230 on macOS**. The voice environment uses **Python 3.12.2**. The full interface requires an activated TouchDesigner installation, a privacy-reviewed local `release` folder, and owner-approved camera and microphone use. This source checkout alone does not contain a runnable visual scene.
+## Commands and visual controls
 
-Prepare a new copy of the scene and update its installed Python DATs:
-
-```sh
-python3 tools/prepare_local_scene.py /path/to/release "$PWD/local-scene/development" \
-  --review-manifest /path/to/review-manifest.json
-```
-
-The preparation script requires a completed privacy review manifest with approved file hashes. It refuses unreviewed or changed input and iCloud placeholders. No personal recordings or portraits belong in the source folder. Open `local-scene/development/Hand_Tracking_Jarvis_V1.toe` in TouchDesigner. Keep that folder intact. The preparation script copies the existing assets, updates saved paths, installs the maintained bridge and gesture callback, and preserves the original scene alongside the updated one. It refuses to overwrite an existing output folder. Open `/project1/gesture_hud/FINAL_OUTPUT` to view the interface, and keep the timeline running.
-
-Set up the voice environment in the **copied scene’s voice folder** so both processes use the same JSON files:
-
-```sh
-cd local-scene/development/JARVIS_VOICE_V20
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python voice_service.py --activation panel --enable-microphone
-```
-
-Microphone capture is disabled by default. The owner must explicitly opt in with `--enable-microphone`; neither tests nor typed commands need it. The small control window has a **Speak** button. Click it, say a command, then click **Stop recording** or let the five-second limit finish. Recording, transcription, and speech playback run on a worker thread. The model loads once per process. This removes terminal focus from everyday use without adding a global keyboard hook or continuously recording the room.
-
-The launcher `START_JARVIS_VOICE.command` forwards these options and can create its environment on first use. It does not enable microphone capture automatically. For the original terminal workflow, run `python voice_service.py --activation enter --enable-microphone`. Tkinter is required for the panel; use the terminal mode if your Python distribution does not include it.
-
-```sh
-python voice_service.py --list-devices
-python voice_service.py --text "Jarvis, show Japan" --no-speak
-python voice_service.py --activation panel --local-model-only --enable-microphone
-```
-
-The text command tests routing and scene communication without recording audio. A missing scene acknowledgement is reported explicitly. `--local-model-only` refuses to download a missing model. Microphone permissions must be granted to the application hosting Python. Set `input_device` in `settings.json` to a device index if the default input is wrong.
-
-## Controls
-
-| Input | Action |
+| Input | Intended scene action |
 | --- | --- |
-| Pinch over a globe, workspace, or hologram control | Begin that control’s interaction |
-| Hold a captured pinch and move | Drag or manipulate the captured element |
-| Release the pinch or lose tracking | Release the capture |
-| “Jarvis, show Japan” | Select a saved country |
-| “Jarvis, open globe” | Open the globe |
-| “Jarvis, open tracking” | Open the tracking workspace |
-| “Jarvis, switch to cinematic mode” | Replace the camera background |
-| “Jarvis, reset core” | Reset the central hologram |
-| “Jarvis, mute ambient sound” | Mute the optional ambient loop |
-| “Jarvis, help” | Read the supported command categories |
+| Pinch and hold a control, then move | Capture and manipulate that control |
+| Release the pinch or lose tracking | Release capture |
+| “Jarvis show Japan” | Select a saved country link |
+| “Jarvis open globe” | Open the projected globe |
+| “Jarvis open tracking” | Open the tracking workspace |
+| “Jarvis switch to cinematic mode” | Select the non-camera background |
+| “Jarvis reset core” | Reset the central hologram |
+| “Jarvis mute ambient sound” | Mute the optional ambience |
 
-Voice commands start with “Jarvis” and contain one complete action. Negated, compound, and ambiguous phrases are rejected. “Jarvis” is checked after transcription; it is not an always-listening wake-word detector. The legacy “analyze Joey locations” command cycles three saved country links and retains its original compatibility name.
+The router requires a complete command and rejects negated, compound and ambiguous phrases. Country links are a visual demonstration, not identity recognition or real location tracking. The wireframe face is procedural. The “system” workspace is a prototype panel rather than a complete monitoring tool.
 
-## Privacy and dependencies
+## Full scene and optional hardware
 
-Microphone clips stay in memory and are discarded after recognition. The service never writes audio files, raw transcripts, free-form replies, or exception messages to its JSON state. Only canonical allowlisted actions, sequence numbers, timestamps, phase flags, and fixed diagnostic codes cross the file bridge. Unmatched speech is neither logged nor forwarded to a language model, even when an old settings file enables Ollama.
+The private prototype previously opened in TouchDesigner **2025.33230 on macOS**. That is the checked build, not a claimed minimum or a guarantee for other releases. This checkout cannot recreate its node network from the extracted Python alone. Installing the latest upstream MediaPipe demo does not recreate JARVIS either.
 
-Camera processing uses the existing MediaPipe local runtime. The maintained HUD code draws arrays in memory and does not export frames during normal operation. The privacy cleanup removed personal portraits, recording-derived ambience, stored speech text, and saved tracking caches from the reviewed local scenes. Generic geometric panels and silence preserve the expected asset paths. Saving a third-party editor session can serialize operator state, so a reviewed scene file is still required for any export.
+[Local scene setup](docs/LOCAL_SCENE.md) explains the required private scene, assets, MediaPipe dependency and adjacent voice folder. Voice capture additionally needs the packages in `JARVIS_VOICE_V20/requirements.txt`, Tkinter for the panel and explicit `--enable-microphone` opt-in. Uncached Whisper weights are downloaded unless `--local-model-only` is used. These are optional hardware steps, not prerequisites for the device-free quick start.
 
-First-time dependency installation contacts the Python package index. Loading an uncached Whisper model downloads weights from Hugging Face; `--local-model-only` prevents that download. Those setup requests do not contain speech or camera data. The Python runtime has no hosted recognition API or free-form text-forwarding path. MediaPipe serves bundled resources locally and uses a loopback connection to TouchDesigner. Its third-party browser runtime has not undergone a complete network or forensic audit.
+No camera or microphone was activated during final preparation. Live recognition accuracy, the real push-to-talk window, full physical gesture workflows and sustained performance remain unverified. Cinematic mode hides the camera layer; it does not disable the independent MediaPipe capture path. I omitted screenshots because a newly launched private scene could activate that path, and the older camera-free image still contains graphics whose redistribution basis is incomplete.
 
-No live microphone or camera testing was performed during the privacy cleanup. The tests use typed commands, synthetic buffers, and mocked device boundaries. Original scene and asset packages remain excluded from this source-only publication candidate.
-See [architecture](docs/ARCHITECTURE.md), [validation](docs/VALIDATION.md), [privacy](docs/PRIVACY.md), and [source provenance](PROVENANCE.md). Upstream components and the remaining textures and graphics still need a redistribution review. No license is asserted for them.
+## Privacy and provenance
 
-## Tests
+Microphone audio stays in memory. The maintained service writes no audio files or raw transcripts and does not forward unknown speech to a language model. Its JSON bridge carries only fixed actions, timestamps, sequence numbers, flags and diagnostic codes. Camera frames are processed in memory by the existing scene runtime; a later saved editor session can serialize operator state and needs another review before export.
 
-```sh
-python -m pip install -r JARVIS_VOICE_V20/requirements.txt
-python -m unittest discover -s tests -v
-```
-
-The tests cover routing, real temporary-file exchange at the bridge boundary, acknowledgements, stale packets, malformed JSON, process locking, gesture inputs, pinch jitter, and tracking loss. They do not substitute for speaking into a microphone or demonstrating gestures in front of a camera. See the validation record for the exact checks completed and the remaining limitations.
+The candidate contains no binary scene, photographs, audio, model weights or third-party asset package. No source-code license has been assigned. See [distribution and attribution](docs/DISTRIBUTION.md), [source provenance](PROVENANCE.md), [privacy](docs/PRIVACY.md), [architecture](docs/ARCHITECTURE.md) and [validation](docs/VALIDATION.md) for the boundaries and evidence.

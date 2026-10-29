@@ -1,6 +1,6 @@
 # Validation record
 
-Checked locally on 29 October 2026. All **43 unittest tests passed**, including the original 32 regression tests and 11 privacy checks. The tests use synthetic values and temporary files. They exercise command matching, bridge acknowledgements, expiry, malformed packets, process locking, pinch hysteresis, tracking loss, transcript suppression, disabled capture, and reviewed-file copying.
+Checked locally on 29 October 2026. All **49 unittest tests passed**, retaining the 43 previously passing cases, including the original 32 regression cases. Six final preparation checks exercise synthetic capture bounds, stop/overflow cleanup, push-to-talk wiring and the complete typed service-to-bridge acknowledgement path. The tests use synthetic values and temporary files. They exercise command matching, bridge acknowledgements, expiry, malformed packets, process locking, pinch hysteresis, tracking loss, transcript suppression, disabled capture, and reviewed-file copying.
 
 The original builder kit's NumPy renderer smoke test passed at 960×540 for four panel reveal states. Python compilation and launcher shell syntax also passed. A hosted Actions workflow is included, but no hosted run has occurred for JARVIS.
 
@@ -20,4 +20,10 @@ The existing environment reported Python 3.12.2, faster-whisper 1.2.1, sounddevi
 
 ## Remaining limitations
 
-The push-to-talk window, capture stop behavior, recognition accuracy, playback feedback, and full gesture workflows still need an owner-approved hardware session. No new hardware permission or live test is part of this cleanup. Scene and asset redistribution rights remain open, and this source checkout alone cannot reproduce the visual application. No license has been assigned pending the provenance review.
+The real Tk push-to-talk window, physical microphone stop behavior, recognition accuracy, playback feedback, and full gesture workflows still need an owner-approved hardware session. Fake Tk/worker boundaries and a synthetic InputStream verify code paths without establishing real GUI responsiveness or device behavior. No new hardware permission or live test is part of this cleanup. Scene and asset redistribution rights remain open, and this source checkout alone cannot reproduce the visual application. No license has been assigned pending the provenance review.
+
+## Final packaging checks
+
+The cleaned development scene was reviewed statically: 1,558 operator definition files, nine literal project-relative file references and 55 explicitly enumerated renderer assets. Those enumerated files exist locally. This does not prove every dynamic expression or a relocated editor session will work. The external MediaPipe binary, embedded OpenPose component and remaining art have incomplete version/provenance evidence, so none was copied into the publication candidate.
+
+The public candidate contains source, tests and Markdown only. The exact tree and every Git object, including historical objects, were checked for media, runtime state, private paths and credential patterns. Standalone typed commands were checked without a model or devices. No new HUD screenshot was captured and no hardware process was launched. See [distribution](DISTRIBUTION.md) for the decision and [local scene setup](LOCAL_SCENE.md) for the missing private requirements.

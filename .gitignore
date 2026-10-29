@@ -13,3 +13,18 @@ voice_service.lock
 *.mp4
 *.toe
 *.tox
+
+# This publication candidate intentionally contains source only.
+*.toe
+*.tox
+*.npy
+*.png
+*.jpg
+*.jpeg
+*.aif
+*.aiff
+*.m4a
+*.mp3
+*.zip
+*.tar.gz
+*.log

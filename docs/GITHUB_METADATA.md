@@ -2,8 +2,8 @@
 
 Recommended repository name: `jarvis-interface`
 
-About description: A TouchDesigner interface combining hand gestures, an animated HUD, and local Python voice commands.
+About description: Source and tests for a TouchDesigner HUD with hand gesture controls and a local Python voice bridge.
 
 Topics: `touchdesigner`, `python`, `mediapipe`, `hand-tracking`, `gesture-recognition`, `voice-control`, `computer-vision`, `human-computer-interaction`, `numpy`, `faster-whisper`
 
-The repository has not been created or configured remotely. Publication remains subject to approval, asset rights, and completion of the documented hardware checks. The current source-only tree excludes the scene, portraits, textures, audio, local evidence, transcripts, environments, and backups.
+Recommendation: publish this clearly described source-only version after owner approval. The visual scene is excluded because component and asset redistribution evidence is incomplete. The repository is not a self-contained runnable TouchDesigner application. No remote repository has been created or configured, and nothing has been pushed or published.
