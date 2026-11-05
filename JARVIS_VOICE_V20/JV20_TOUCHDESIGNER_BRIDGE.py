@@ -59,7 +59,7 @@ def _tick_joey_scan():
         if _clock.monotonic()<_scan['next_at']:return
         idx=_scan['index']+1
         if idx>=len(_SCAN_COUNTRIES):
-            # Keep Japan and its linked photo open at the end.
+            # Leave the final country selection open after the tour.
             _last_action='Joey locations scan complete - Japan selected'
             _scan=None
             return

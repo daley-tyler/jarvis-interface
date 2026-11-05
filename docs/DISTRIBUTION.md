@@ -1,6 +1,6 @@
 # Distribution decision
 
-I am preparing this as a source-only portfolio repository. The Python code and tests are reviewable and usable without devices. A complete visual application is not included.
+This is the published source-only portfolio repository. The Python code and tests are reviewable and usable without devices. A complete visual application is not included.
 
 I inspected the cleaned development scene rather than returning to an unreviewed original. Its literal project-relative file references and the 55 explicitly enumerated renderer asset paths exist in the private development folder. Native extraction shows an external `toxes/MediaPipe.tox` dependency and an embedded OpenPose component. File existence and a successful native round trip do not establish redistribution rights or a fresh runtime result.
 
