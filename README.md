@@ -1,6 +1,6 @@
 # JARVIS Interface
 
-I built JARVIS to explore hand gestures and short voice commands as controls for a TouchDesigner interface. The Python code handles pinch tracking, routes commands, and sends actions to the scene through local JSON files. You can try a typed command and run the tests without a camera, microphone, Whisper model or TouchDesigner installation.
+I built this JARVIS project to explore hand gestures and short voice commands as controls for a TouchDesigner interface. The Python code handles pinch tracking, routes commands, and sends actions to the scene through local JSON files. You can try a typed command and run the tests without a camera, microphone, Whisper model or TouchDesigner installation.
 
 This repository includes the Python modules, tests and integration notes. The full visual interface requires the original TouchDesigner scene, MediaPipe components and visual assets. I left those out because I could not establish redistribution rights for every component and asset in the prototype.
 
